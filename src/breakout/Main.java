@@ -3,8 +3,11 @@ package breakout;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -14,6 +17,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import java.awt.*;
 
 /**
  * Feel free to completely change this code or delete it entirely. 
@@ -30,8 +35,8 @@ public class Main extends Application {
     public static final Paint BACKGROUND = Color.AZURE;
     public static final Paint HIGHLIGHT = Color.OLIVEDRAB;
     public static final String BOUNCER_IMAGE = "ball.gif";
-    public static final int BOUNCER_SPEED = 30;
-    public static final Paint MOVER_COLOR = Color.PLUM;
+    public static final int BOUNCER_SPEED = 200;
+    public static final Paint MOVER_COLOR = Color.BLACK;
     public static final int MOVER_SIZE = 60;
     public static final int MOVER_SPEED = 15;
     public static final Paint GROWER_COLOR = Color.BISQUE;
@@ -43,6 +48,9 @@ public class Main extends Application {
     private ImageView myBall;
     private Rectangle myPaddle;
     private Rectangle myGrower;
+    private Scene mySplash;
+    double directionX = 1;
+    double directionY = 1;
 
 
     /**
@@ -51,16 +59,16 @@ public class Main extends Application {
     @Override
     public void start (Stage stage) {
         // attach scene to the stage and display it
+        Button button = new Button("pundek");
         myScene = setupGame(SIZE, SIZE, BACKGROUND);
-        stage.setScene(myScene);
+        button.setOnAction(e -> {stage.setScene(myScene);gameLoop();});
         stage.setTitle(TITLE);
+        Group group = new Group();
+        group.getChildren().add(button);
+        mySplash = new Scene(group, SIZE, SIZE, BACKGROUND);
+        stage.setScene(mySplash);
         stage.show();
-        // attach "game loop" to timeline to play it (basically just calling step() method repeatedly forever)
-        KeyFrame frame = new KeyFrame(Duration.millis(MILLISECOND_DELAY), e -> step(SECOND_DELAY));
-        Timeline animation = new Timeline();
-        animation.setCycleCount(Timeline.INDEFINITE);
-        animation.getKeyFrames().add(frame);
-        animation.play();
+
     }
 
     // Create the game's "scene": what shapes will be in the game and their starting properties
@@ -73,7 +81,7 @@ public class Main extends Application {
         // x and y represent the top left corner, so center it in window
         myBall.setX(width / 2 - myBall.getBoundsInLocal().getWidth() / 2);
         myBall.setY(height / 2 - myBall.getBoundsInLocal().getHeight() / 2);
-        myPaddle = new Rectangle(width / 2 - MOVER_SIZE / 2, height-30, MOVER_SIZE + 10, MOVER_SIZE/3);
+        myPaddle = new Rectangle(width / 2 - MOVER_SIZE / 2, height-MOVER_SIZE/2, MOVER_SIZE + 10, MOVER_SIZE/3);
         myPaddle.setFill(MOVER_COLOR);
         myGrower = new Rectangle(width / 2 - GROWER_SIZE / 2, height / 2 + 50, GROWER_SIZE, GROWER_SIZE);
         myGrower.setFill(GROWER_COLOR);
@@ -89,39 +97,54 @@ public class Main extends Application {
         return scene;
     }
 
+    private void gameLoop (){
+        // attach "game loop" to timeline to play it (basically just calling step() method repeatedly forever)
+        KeyFrame frame = new KeyFrame(Duration.millis(MILLISECOND_DELAY), e -> step(SECOND_DELAY));
+        Timeline animation = new Timeline();
+        animation.setCycleCount(Timeline.INDEFINITE);
+        animation.getKeyFrames().add(frame);
+        animation.play();
+    }
+
     // Change properties of shapes in small ways to animate them over time
     // Note, there are more sophisticated ways to animate shapes, but these simple ways work fine to start
     private void step (double elapsedTime) {
         // update "actors" attributes
-        myBall.setX(myBall.getX() + BOUNCER_SPEED * elapsedTime);
-        myBall.setY(myBall.getY() + BOUNCER_SPEED * elapsedTime);
+        myBall.setX(myBall.getX() + BOUNCER_SPEED * elapsedTime*directionX);
+        myBall.setY(myBall.getY() + BOUNCER_SPEED * elapsedTime*directionY);
+        if (myBall.getX() + myBall.getBoundsInLocal().getWidth() >= myScene.getWidth()){
+            directionX *= -1;
+        }
+        if (myBall.getX() <= 0){
+            directionX *= -1;
+        }
+        if (myBall.getY() + myBall.getBoundsInLocal().getHeight() >= myScene.getHeight()){
+            directionY *= -1;
+        }
+        if (myBall.getY() <= 0){
+            directionY *= -1;
+        }
 
-        Shape intersection = Shape.intersect(myPaddle, myGrower);
-        if (intersection.getBoundsInLocal().getWidth() != -1) {
-            myPaddle.setFill(HIGHLIGHT);
-        }
-        else {
-            myPaddle.setFill(MOVER_COLOR);
-        }
-        // with images can only check bounding box
-        if (myGrower.getBoundsInParent().intersects(myBall.getBoundsInParent())) {
-            myGrower.setFill(HIGHLIGHT);
-        }
-        else {
-            myGrower.setFill(GROWER_COLOR);
+        //Handle Paddle-Ball Interaction (add specificity to the paddle)
+        // condition for collision: find shape interaction and check to see if above -1.
+        //Shape shape = Shape.intersect(myBall, myPaddle);
+        if (myBall.getY() + myBall.getBoundsInLocal().getHeight() >= myPaddle.getY() && myBall.getY() + myBall.getBoundsInLocal().getHeight() <= myPaddle.getY()+2
+                && myBall.getX() >= myPaddle.getX() && myBall.getX() <= (myPaddle.getX() + myPaddle.getWidth())){
+            directionY *= -1;
+            //directionX *= -1;
         }
     }
 
     // What to do each time a key is pressed
     private void handleKeyInput (KeyCode code) {
         if (code == KeyCode.RIGHT) {
-            if (myPaddle.getX() + myPaddle.getWidth() == myScene.getWidth()){
+            if (myPaddle.getX() + myPaddle.getWidth() >= myScene.getWidth()-5){
                 return;
             }
             myPaddle.setX(myPaddle.getX() + MOVER_SPEED);
         }
         else if (code == KeyCode.LEFT) {
-            if (myPaddle.getX() == 0){
+            if (myPaddle.getX() <= 5){
                 return;
             }
             myPaddle.setX(myPaddle.getX() - MOVER_SPEED);
