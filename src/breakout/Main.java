@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -18,7 +19,9 @@ import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.awt.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 /**
  * Feel free to completely change this code or delete it entirely. 
@@ -35,7 +38,6 @@ public class Main extends Application {
     public static final Paint BACKGROUND = Color.AZURE;
     public static final Paint HIGHLIGHT = Color.OLIVEDRAB;
     public static final String BOUNCER_IMAGE = "ball.gif";
-    public static final int BOUNCER_SPEED = 200;
     public static final Paint MOVER_COLOR = Color.BLACK;
     public static final int MOVER_SIZE = 60;
     public static final int MOVER_SPEED = 15;
@@ -46,6 +48,7 @@ public class Main extends Application {
     // some things needed to remember during game
     private Scene myScene;
     private ImageView myBall;
+    private int BOUNCER_SPEED = 200;
     private Rectangle myPaddle;
     private Rectangle myGrower;
     private Scene mySplash;
@@ -57,22 +60,25 @@ public class Main extends Application {
      * Initialize what will be displayed and how it will be updated.
      */
     @Override
-    public void start (Stage stage) {
+    public void start (Stage stage) throws FileNotFoundException {
         // attach scene to the stage and display it
-        Button button = new Button("pundek");
+        mySplash = splashScreen(stage);
         myScene = setupGame(SIZE, SIZE, BACKGROUND);
-        button.setOnAction(e -> {stage.setScene(myScene);gameLoop();});
         stage.setTitle(TITLE);
-        Group group = new Group();
-        group.getChildren().add(button);
-        mySplash = new Scene(group, SIZE, SIZE, BACKGROUND);
         stage.setScene(mySplash);
         stage.show();
-
     }
 
+    private Scene splashScreen(Stage stage){
+        Button button = new Button("pundek");
+        button.setOnAction(e -> {stage.setScene(myScene);gameLoop();});
+        Group group = new Group();
+        group.getChildren().add(button);
+        Scene retSplash = new Scene(group, SIZE, SIZE, BACKGROUND);
+        return retSplash;
+    }
     // Create the game's "scene": what shapes will be in the game and their starting properties
-    private Scene setupGame (int width, int height, Paint background) {
+    private Scene setupGame (int width, int height, Paint background) throws FileNotFoundException {
         // create one top level collection to organize the things in the scene
         Group root = new Group();
         // make some shapes and set their properties
@@ -94,6 +100,10 @@ public class Main extends Application {
         // respond to input
         scene.setOnKeyPressed(e -> handleKeyInput(e.getCode()));
         scene.setOnMouseClicked(e -> handleMouseInput(e.getX(), e.getY()));
+
+        //Create bricks and add to scene
+        int level = 1;
+        makeBricks(root, level);
         return scene;
     }
 
@@ -118,22 +128,34 @@ public class Main extends Application {
         if (myBall.getX() <= 0){
             directionX *= -1;
         }
-        if (myBall.getY() + myBall.getBoundsInLocal().getHeight() >= myScene.getHeight()){
-            directionY *= -1;
-        }
         if (myBall.getY() <= 0){
             directionY *= -1;
         }
-
         //Handle Paddle-Ball Interaction (add specificity to the paddle)
         // condition for collision: find shape interaction and check to see if above -1.
         //Shape shape = Shape.intersect(myBall, myPaddle);
-        if (myBall.getY() + myBall.getBoundsInLocal().getHeight() >= myPaddle.getY() && myBall.getY() + myBall.getBoundsInLocal().getHeight() <= myPaddle.getY()+2
+        if (myBall.getY() + myBall.getBoundsInLocal().getHeight() >= myPaddle.getY() && myBall.getY() + myBall.getBoundsInLocal().getHeight() <= myPaddle.getY()+3
                 && myBall.getX() >= myPaddle.getX() && myBall.getX() <= (myPaddle.getX() + myPaddle.getWidth())){
             directionY *= -1;
             //directionX *= -1;
         }
     }
+
+    private void makeBricks(Group root, int level) throws FileNotFoundException {
+        //read text file
+        File file = new File("resources/level_1.txt");
+        Scanner sc = new Scanner(file);
+
+       while(sc.hasNextLine()){
+           Bricks test = new Bricks (3, false, "brick1.gif");
+       }
+
+    }
+
+
+
+
+
 
     // What to do each time a key is pressed
     private void handleKeyInput (KeyCode code) {
@@ -149,6 +171,9 @@ public class Main extends Application {
             }
             myPaddle.setX(myPaddle.getX() - MOVER_SPEED);
         }
+        else{
+            callCheatCode(code);
+        }
         // NEW Java 12 syntax that some prefer (but watch out for the many special cases!)
         //   https://blog.jetbrains.com/idea/2019/02/java-12-and-intellij-idea/
         // Note, must set Project Language Level to "13 Preview" under File -> Project Structure
@@ -158,6 +183,15 @@ public class Main extends Application {
         //     case UP -> myPaddle.setY(myPaddle.getY() - MOVER_SPEED);
         //     case DOWN -> myPaddle.setY(myPaddle.getY() + MOVER_SPEED);
         // }
+    }
+
+    private void callCheatCode(KeyCode code) {
+        if (code == KeyCode.S){
+            BOUNCER_SPEED /= 2;
+        }
+        else if (code == KeyCode.F){
+            BOUNCER_SPEED *= 2;
+        }
     }
 
     // What to do each time a key is pressed
