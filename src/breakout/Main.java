@@ -21,6 +21,8 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Scanner;
 
 /**
@@ -50,11 +52,10 @@ public class Main extends Application {
     private ImageView myBall;
     private int BOUNCER_SPEED = 200;
     private Rectangle myPaddle;
-    private Rectangle myGrower;
     private Scene mySplash;
     double directionX = 1;
     double directionY = 1;
-
+    ArrayList<Brick> gameBricks;
 
     /**
      * Initialize what will be displayed and how it will be updated.
@@ -89,12 +90,9 @@ public class Main extends Application {
         myBall.setY(height / 2 - myBall.getBoundsInLocal().getHeight() / 2);
         myPaddle = new Rectangle(width / 2 - MOVER_SIZE / 2, height-MOVER_SIZE/2, MOVER_SIZE + 10, MOVER_SIZE/3);
         myPaddle.setFill(MOVER_COLOR);
-        myGrower = new Rectangle(width / 2 - GROWER_SIZE / 2, height / 2 + 50, GROWER_SIZE, GROWER_SIZE);
-        myGrower.setFill(GROWER_COLOR);
         // order added to the group is the order in which they are drawn
         root.getChildren().add(myBall);
         root.getChildren().add(myPaddle);
-        root.getChildren().add(myGrower);
         // create a place to see the shapes
         Scene scene = new Scene(root, width, height, background);
         // respond to input
@@ -102,8 +100,8 @@ public class Main extends Application {
         scene.setOnMouseClicked(e -> handleMouseInput(e.getX(), e.getY()));
 
         //Create bricks and add to scene
-        int level = 1;
-        makeBricks(root, level);
+        int level = 2;
+        makeBricks(root, scene, level);
         return scene;
     }
 
@@ -137,17 +135,80 @@ public class Main extends Application {
         if (myBall.getY() + myBall.getBoundsInLocal().getHeight() >= myPaddle.getY() && myBall.getY() + myBall.getBoundsInLocal().getHeight() <= myPaddle.getY()+3
                 && myBall.getX() >= myPaddle.getX() && myBall.getX() <= (myPaddle.getX() + myPaddle.getWidth())){
             directionY *= -1;
+            if (myPaddle.getFill() == Color.ROYALBLUE){
+                myPaddle.setFill(Color.DARKGREEN);
+                return;
+            }
+            myPaddle.setFill(Color.ROYALBLUE);
             //directionX *= -1;
+        }
+        brickBallCollision();
+    }
+
+    /*This function checks for collisions between the ball and all the bricks
+    * This function runs the appropriate logic to update the brick values and deflect the ball if a collision occurs
+    * */
+    private void brickBallCollision() {
+        //System.out.println(gameBricks.size());    //this works
+        int size = gameBricks.size();
+        for(int i = 0; i < size; i++){
+
+            ImageView brickNode = gameBricks.get(i).getNode();
+            //If the ball is within the horizontal space of the brick, check whether a collision occurred at the top or bottom of the brick
+            if(myBall.getX() >= brickNode.getX() + 3 && myBall.getX() <= brickNode.getX() + brickNode.getFitWidth() -3){
+                //Check for collision on the top of the brick
+                if (myBall.getY() + myBall.getBoundsInLocal().getHeight() >= brickNode.getY()
+                        && myBall.getY() + myBall.getBoundsInLocal().getHeight() <= brickNode.getY() + brickNode.getFitHeight()) {
+                    directionY *= -1;
+                }
+                //Check for collision on the bottom of the brick
+                else if (myBall.getY() <= brickNode.getY() + brickNode.getFitHeight()
+                        && myBall.getY() >= brickNode.getY()){
+                    directionY *= -1;
+                }
+
+            }
+            else if (myBall.getY() <= brickNode.getY() + brickNode.getFitHeight()-3 && myBall.getY() + myBall.getBoundsInLocal().getHeight() >= brickNode.getY()+3){
+                if (myBall.getX() + myBall.getBoundsInLocal().getWidth() >= brickNode.getX()
+                        && myBall.getX() + myBall.getBoundsInLocal().getWidth() <= brickNode.getX() + brickNode.getFitWidth()){
+                    directionX *= -1;
+                }
+                else if (myBall.getX() <= brickNode.getX() + brickNode.getFitWidth() && myBall.getX() >= brickNode.getX()){
+                    directionX *= -1;
+                }
+            }
+            //brickCheck()
         }
     }
 
-    private void makeBricks(Group root, int level) throws FileNotFoundException {
+    private void makeBricks(Group root, Scene scene, int level) throws FileNotFoundException {
         //read text file
-        File file = new File("resources/level_1.txt");
+        File file = new File("resources/level_" + level + ".txt");
         Scanner sc = new Scanner(file);
 
-       while(sc.hasNextLine()){
-           Bricks test = new Bricks (3, false, "brick1.gif");
+
+        int initXValue = (int) (scene.getWidth()/8 + 15);
+        int yValue = (int) (scene.getHeight()/8);
+        Brick dummy = new Brick (1, 0, 0, "brick1.gif"); //dummy brick object to extract width and height values
+        int brickWidth = (int) dummy.getNode().getFitWidth();
+        int brickHeight = (int) dummy.getNode().getFitHeight();
+
+        String imageNames[] = {"none", "brick7.gif", "brick4.gif", "brick10.gif"};
+        gameBricks = new ArrayList<>();
+        while(sc.hasNextLine()){
+            String row = sc.nextLine();
+            String brickHits [] = row.split(" ");
+            int xValue = initXValue;
+            for (int i = 0; i< brickHits.length; i++){
+                int hits = Integer.parseInt(brickHits[i]);
+                if(hits != 0){  //skip creating a new brick object if the hits is 0
+                    Brick temp = new Brick (hits, xValue, yValue, imageNames[hits]);
+                    root.getChildren().add(temp.getNode()); //add the nodes to the group
+                    gameBricks.add(temp);
+                }
+                xValue += brickWidth;
+            }
+            yValue += brickHeight;
        }
 
     }
@@ -192,15 +253,24 @@ public class Main extends Application {
         else if (code == KeyCode.F){
             BOUNCER_SPEED *= 2;
         }
+        else if (code == KeyCode.M){
+            myPaddle.setWidth(myPaddle.getWidth()*2);
+        }
+        else if (code == KeyCode.N){
+            myPaddle.setWidth(myPaddle.getWidth()/2);
+        }
+        else if (code == KeyCode.R){
+            myBall.setX(myScene.getWidth()/2);
+            myBall.setY(myScene.getHeight()/2);
+            myPaddle.setX(myScene.getWidth()/2);
+        }
     }
 
     // What to do each time a key is pressed
     private void handleMouseInput (double x, double y) {
-        if (myGrower.contains(x, y)) {
-            myGrower.setScaleX(myGrower.getScaleX() * GROWER_RATE);
-            myGrower.setScaleY(myGrower.getScaleY() * GROWER_RATE);
         }
-    }
+
     public static void main (String[] args){launch(args);};
+
     }
 
