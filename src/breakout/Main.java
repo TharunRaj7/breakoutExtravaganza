@@ -7,7 +7,6 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -21,6 +20,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Feel free to completely change this code or delete it entirely. 
@@ -39,7 +40,7 @@ public class Main extends Application {
     public static final String BOUNCER_IMAGE = "ball.gif";
     public static final Paint MOVER_COLOR = Color.ROYALBLUE;
     public static final int MOVER_SIZE = 70;
-    public static final int MOVER_SPEED = 25;
+    public static final int MOVER_SPEED = 35;
     public static final Paint GROWER_COLOR = Color.BISQUE;
 
     // some things needed to remember during game
@@ -61,6 +62,8 @@ public class Main extends Application {
     private Label startMessage;
     private Stage stage;
     Timeline animation;
+    boolean paddleRoidsActivated = false;
+    boolean ballAcidActivated = false;
 
     /**
      * Initialize what will be displayed and how it will be updated.
@@ -102,7 +105,7 @@ public class Main extends Application {
         root.getChildren().add(myBall);
         root.getChildren().add(myPaddle);
 
-        bouncer_speed = 200;
+        bouncer_speed = 250;
 
         scoreDisp = new Label("Score: " + score);
         livesDisp = new Label("Lives: " + lives);
@@ -182,21 +185,21 @@ public class Main extends Application {
             return;
         }
         else if (lives < 0){
-            gameLost();
+            gameEnd("Lost");
         }
     }
 
-    private void gameLost() {
+    private void gameEnd(String end) {
         animation.stop();
         Group group = new Group();
-        Label label = new Label("                     You Lost!\n\n" +
+        Label label = new Label("                     You "+ end + "!\n\n" +
                 "         You got a score of " + score + "\n\n" +
                 "   Would you like to replay?");
         Button button = new Button("Replay");
         button.setTranslateY(350);
         button.setTranslateX(270);
         button.setScaleX(2.8); button.setScaleY(2);
-       // button.setEffect( );
+        button.setOnAction(e -> {score = 0; lives = 3; currentLevel = 0; callNewLevel();});
         label.setTranslateY(100); label.setTranslateX(70);
         label.setTextFill(Color.GREENYELLOW);
         label.setFont(new Font("Algerian", 30));
@@ -240,12 +243,15 @@ public class Main extends Application {
                 }
 
             }
+            //Check for side collisions
             else if (myBall.getY() <= brickNode.getY() + brickNode.getFitHeight()-3 && myBall.getY() + myBall.getBoundsInLocal().getHeight() >= brickNode.getY()+3){
+                // Collision on the left side of the brick
                 if (myBall.getX() + myBall.getBoundsInLocal().getWidth() >= brickNode.getX()
                         && myBall.getX() + myBall.getBoundsInLocal().getWidth() <= brickNode.getX() + brickNode.getFitWidth()){
                     directionX *= -1;
                     hasHit = true;
                 }
+                //Collision on the right side of the brick
                 else if (myBall.getX() <= brickNode.getX() + brickNode.getFitWidth() && myBall.getX() >= brickNode.getX()){
                     directionX *= -1;
                     hasHit = true;
@@ -266,6 +272,10 @@ public class Main extends Application {
     private void checkGameCondition(int bricksLeft) {
         //System.out.println("debug checkGame");
         if (bricksLeft == 0){
+            if (currentLevel == 3){
+                gameEnd("Won");
+                return;
+            }
             //System.out.println("Calling callNewLevel");
             callNewLevel();
         }
@@ -287,9 +297,6 @@ public class Main extends Application {
             resetBall();
             //bouncer_speed/=2;
         }
-        else{
-            //Call end game protocol
-        }
     }
 
     //Removes respective bricks from the screen if it has not hits left and the gameBricks arrayList
@@ -299,6 +306,58 @@ public class Main extends Application {
         if(brick.getHits() < 1){
             root.getChildren().remove(brick.getNode());
             gameBricks.remove(brick);
+            //System.out.println(brick.getPowerUpType());
+            if(brick.isHasPowerUp()){
+                powerUpHandler(brick.getPowerUpType());
+            }
+
+        }
+    }
+
+    private void powerUpHandler(String powerUpType) {
+        if(powerUpType.equals("Lives")){
+            if(lives < 5){
+                lives++;
+                livesDisp.setText("lives: " + lives);
+            }
+        }
+        else if (powerUpType.equals("PaddleRoids")){
+            if(!paddleRoidsActivated){
+                paddleRoidsActivated = true;
+                myPaddle.setWidth(myPaddle.getWidth() + 100);
+                myPaddle.setX(myPaddle.getX() - 50);
+                Timer t1 = new java.util.Timer();
+                t1.schedule(
+                        new java.util.TimerTask() {
+                            @Override
+                            public void run() {
+                                myPaddle.setWidth(myPaddle.getWidth() - 100);
+                                myPaddle.setX(myPaddle.getX() + 50);
+                                paddleRoidsActivated = false;
+                                t1.cancel();
+                            }
+                        },
+                        10000
+                );
+            }
+        }
+        else if (powerUpType.equals("BallAcid")){
+            if (!ballAcidActivated){
+                bouncer_speed -= 70;
+                ballAcidActivated = true;
+                Timer t2 = new java.util.Timer();
+                t2.schedule(
+                        new java.util.TimerTask() {
+                            @Override
+                            public void run() {
+                                bouncer_speed += 70;
+                                ballAcidActivated = false;
+                                t2.cancel();
+                            }
+                        },
+                        10000
+                );
+            }
         }
     }
 

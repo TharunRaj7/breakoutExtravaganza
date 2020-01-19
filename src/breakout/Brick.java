@@ -2,6 +2,8 @@ package breakout;
 
 import javafx.scene.image.ImageView;
 
+import java.util.Random;
+
 public class Brick {
     private final int width = 60;
     private final int height = 30;
@@ -10,28 +12,38 @@ public class Brick {
     private int hits;
     private ImageView myNode;
     private boolean hasPowerUp;
-    private String powerUpType; // only initialized and used if hasPowerUp is set to true
+    private String powerUpType;
 
     public Brick(int hits, int xValue, int yValue, String imageFile) {
         this.hits = hits;
         this.xValue = xValue;
         this.yValue = yValue;
-        this.hasPowerUp = hasPowerUp;
+        this.hasPowerUp = selectHasPowerUp();
+        this.powerUpType = assignPowerUp();
         ImageView image = new ImageView(imageFile);
         image.setX(xValue);
         image.setY(yValue);
         image.setFitWidth(this.width);
         image.setFitHeight(this.height);
         this.myNode = image;
-        assignPowerUp();
     }
 
     //assign random powerup on initialization
-    private void assignPowerUp() {
+    private String assignPowerUp() {
         if (hasPowerUp){
-            //carry out logic
+            String [] powerUpArray = {"Lives", "PaddleRoids", "BallAcid"};
+            Random rand = new Random();
+            return powerUpArray[rand.nextInt(powerUpArray.length)];
         }
-        return;
+        else{
+            return "None";
+        }
+    }
+
+    private boolean selectHasPowerUp(){
+        boolean [] choiceArray = {true,false,false,false,false,false};
+        Random rand = new Random();
+        return choiceArray[rand.nextInt(choiceArray.length)];
     }
 
     public int getHits(){
