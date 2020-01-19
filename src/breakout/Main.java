@@ -7,6 +7,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -30,7 +31,7 @@ public class Main extends Application {
      */
     public static final String TITLE = "Super Breakout (Platinum Edtion)";
     public static final int SIZE = 600;
-    public static final int FRAMES_PER_SECOND = 120;
+    public static final int FRAMES_PER_SECOND = 200;
     public static final int MILLISECOND_DELAY = 1000 / FRAMES_PER_SECOND;
     public static final double SECOND_DELAY = 1.0 / FRAMES_PER_SECOND;
     public static final Paint BACKGROUND = Color.BLACK;
@@ -52,12 +53,14 @@ public class Main extends Application {
     ArrayList<Brick> gameBricks;
     private Group root;
     private int currentLevel;
-    private int score;
-    private int lives;
+    private int score = 0;
+    private int lives = 3;
     private Label levelDisp;
     private Label scoreDisp;
     private Label livesDisp;
+    private Label startMessage;
     private Stage stage;
+    Timeline animation;
 
     /**
      * Initialize what will be displayed and how it will be updated.
@@ -100,22 +103,23 @@ public class Main extends Application {
         root.getChildren().add(myPaddle);
 
         bouncer_speed = 200;
-        score = 0;
-        lives = 3;
 
         scoreDisp = new Label("Score: " + score);
         livesDisp = new Label("Lives: " + lives);
         levelDisp = new Label("Level " + currentLevel);
+        startMessage = new Label("Press G to start");
 
         scoreDisp.setTextFill(Color.GREENYELLOW);
         livesDisp.setTextFill(Color.GREENYELLOW);
         levelDisp.setTextFill(Color.AQUA);
+        startMessage.setTextFill(Color.BLUEVIOLET);
 
         scoreDisp.setTranslateX(100);
-        livesDisp.setTranslateX(150);
-        //levelDisp.setFont(new Font(15));
+        livesDisp.setTranslateX(200);
+        startMessage.setTranslateX(233); startMessage.setTranslateY(350);
+        startMessage.setFont(new Font("Algerian", 15));
 
-        root.getChildren().addAll(scoreDisp, livesDisp, levelDisp);
+        root.getChildren().addAll(scoreDisp, livesDisp, levelDisp, startMessage);
         // create a place to see the shapes
         Scene scene = new Scene(root, width, height, background);
         // respond to input
@@ -130,10 +134,10 @@ public class Main extends Application {
     private void gameLoop (){
         // attach "game loop" to timeline to play it (basically just calling step() method repeatedly forever)
         KeyFrame frame = new KeyFrame(Duration.millis(MILLISECOND_DELAY), e -> step(SECOND_DELAY));
-        Timeline animation = new Timeline();
+        animation = new Timeline();
         animation.setCycleCount(Timeline.INDEFINITE);
         animation.getKeyFrames().add(frame);
-        animation.play();
+        //animation.play();
     }
 
     // Change properties of shapes in small ways to animate them over time
@@ -151,6 +155,9 @@ public class Main extends Application {
         if (myBall.getY() <= 0){
             directionY *= -1;
         }
+        if (myBall.getY() > myScene.getHeight()){
+            checkAndRemoveLives();
+        }
         //Handle Paddle-Ball Interaction (add specificity to the paddle)
         // condition for collision: find shape interaction and check to see if above -1.
         //Shape shape = Shape.intersect(myBall, myPaddle);
@@ -165,6 +172,46 @@ public class Main extends Application {
             //directionX *= -1;
         }
         brickBallCollision();
+    }
+
+    private void checkAndRemoveLives() {
+        lives--;
+        if(lives > -1){
+            livesDisp.setText("lives: " + lives);
+            resetBall();
+            return;
+        }
+        else if (lives < 0){
+            gameLost();
+        }
+    }
+
+    private void gameLost() {
+        animation.stop();
+        Group group = new Group();
+        Label label = new Label("                     You Lost!\n\n" +
+                "         You got a score of " + score + "\n\n" +
+                "   Would you like to replay?");
+        Button button = new Button("Replay");
+        button.setTranslateY(350);
+        button.setTranslateX(270);
+        button.setScaleX(2.8); button.setScaleY(2);
+       // button.setEffect( );
+        label.setTranslateY(100); label.setTranslateX(70);
+        label.setTextFill(Color.GREENYELLOW);
+        label.setFont(new Font("Algerian", 30));
+        group.getChildren().addAll(label, button);
+        Scene scene = new Scene(group, SIZE, SIZE, BACKGROUND);
+        stage.setScene(scene);
+    }
+
+    private void resetBall() {
+        animation.pause();
+        startMessage.setVisible(true);
+        myBall.setX(myScene.getWidth()/2);
+        myBall.setY(myScene.getHeight()/2);
+        directionX = 1;
+        directionY = 1;
     }
 
     /*This function checks for collisions between the ball and all the bricks
@@ -227,6 +274,7 @@ public class Main extends Application {
     private void callNewLevel() {
         //System.out.println("debug");
         if(currentLevel < 3){
+            animation.stop();
             currentLevel++;
             try{
                 myScene = setupGame(SIZE, SIZE, BACKGROUND);
@@ -236,7 +284,8 @@ public class Main extends Application {
             stage.setScene(myScene);
             //bouncer_speed += 50;
             gameLoop();
-            bouncer_speed/=2;
+            resetBall();
+            //bouncer_speed/=2;
         }
         else{
             //Call end game protocol
@@ -309,6 +358,10 @@ public class Main extends Application {
             }
             myPaddle.setX(myPaddle.getX() - MOVER_SPEED);
         }
+        else if (code == KeyCode.G){
+            animation.play();
+            startMessage.setVisible(false);
+        }
         else{
             callCheatCode(code);
         }
@@ -341,10 +394,10 @@ public class Main extends Application {
             myPaddle.setX(myPaddle.getX() + newWidth/4);
         }
         else if (code == KeyCode.R){
-            myBall.setX(myScene.getWidth()/2);
-            myBall.setY(myScene.getHeight()/2);
+           resetBall();
         }
         else if (code == KeyCode.E){
+            animation.play();
             gameBricks.clear();
         }
     }
