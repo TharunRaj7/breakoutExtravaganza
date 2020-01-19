@@ -39,7 +39,7 @@ public class Main extends Application {
     public static final Paint HIGHLIGHT = Color.OLIVEDRAB;
     public static final String BOUNCER_IMAGE = "ball.gif";
     public static final Paint MOVER_COLOR = Color.ROYALBLUE;
-    public static final int MOVER_SIZE = 70;
+    public static final int MOVER_SIZE = 80;
     public static final int MOVER_SPEED = 35;
     public static final Paint GROWER_COLOR = Color.BISQUE;
 
@@ -99,7 +99,7 @@ public class Main extends Application {
         // x and y represent the top left corner, so center it in window
         myBall.setX(width / 2 - myBall.getBoundsInLocal().getWidth() / 2);
         myBall.setY(height / 2 - myBall.getBoundsInLocal().getHeight() / 2);
-        myPaddle = new Rectangle(width / 2 - MOVER_SIZE / 2, height-MOVER_SIZE/2, MOVER_SIZE + 10, MOVER_SIZE/3);
+        myPaddle = new Rectangle(width / 2 - MOVER_SIZE / 2, height-MOVER_SIZE/2, MOVER_SIZE + 10, MOVER_SIZE/4);
         myPaddle.setFill(MOVER_COLOR);
         // order added to the group is the order in which they are drawn
         root.getChildren().add(myBall);
@@ -306,7 +306,7 @@ public class Main extends Application {
         if(brick.getHits() < 1){
             root.getChildren().remove(brick.getNode());
             gameBricks.remove(brick);
-            //System.out.println(brick.getPowerUpType());
+            System.out.println(brick.getPowerUpType());
             if(brick.isHasPowerUp()){
                 powerUpHandler(brick.getPowerUpType());
             }
@@ -331,6 +331,7 @@ public class Main extends Application {
                         new java.util.TimerTask() {
                             @Override
                             public void run() {
+                                System.out.println("roids deactivated");
                                 myPaddle.setWidth(myPaddle.getWidth() - 100);
                                 myPaddle.setX(myPaddle.getX() + 50);
                                 paddleRoidsActivated = false;
@@ -454,10 +455,15 @@ public class Main extends Application {
         }
         else if (code == KeyCode.R){
            resetBall();
+           myPaddle.setX(myScene.getWidth()/2);
+           myPaddle.setWidth(MOVER_SIZE);
         }
         else if (code == KeyCode.E){
             animation.play();
             gameBricks.clear();
+        }
+        else if(code == KeyCode.L){
+
         }
     }
 
