@@ -368,14 +368,15 @@ public class GameDriver extends Application {
         }
     }
 
-    //Removes respective bricks from the screen if it has not hits left and the gameBricks arrayList
+    //Removes respective bricks from the screen if it has not hits left and the gameBricks arrayList.
+    //The function also calls appropriate functions when a brick is destroyed to initiate both the powerUpHandler function and the initiateAlien function
     private void brickCheckAndRemove(Brick brick) {
         brick.brickHit();
         updateScore(1);
         if(brick.getHits() < 1){
             root.getChildren().remove(brick.getNode());
             gameBricks.remove(brick);
-            System.out.println(brick.getPowerUpType());
+            //System.out.println(brick.getPowerUpType());
             Random rand = new Random();
             boolean [] choiceArray = {true,false,false,false,false};
             boolean choice = choiceArray[rand.nextInt(choiceArray.length)];
