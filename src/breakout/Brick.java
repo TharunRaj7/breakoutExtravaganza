@@ -15,6 +15,8 @@ public class Brick {
     private boolean hasPowerUp;
     private String powerUpType;
 
+
+
     public Brick(int hits, int xValue, int yValue, String imageFile) {
         this.hits = hits;
         this.xValue = xValue;
@@ -39,7 +41,7 @@ public class Brick {
     //assign random powerup on initialization
     private String assignPowerUp() {
         if (hasPowerUp){
-            String [] powerUpArray = {"Lives", "PaddleRoids", "BallAcid", "InfinityLasers"};
+            String [] powerUpArray = {/*"Lives", "PaddleRoids", "BallAcid", */"Alien"};
             Random rand = new Random();
             return powerUpArray[rand.nextInt(powerUpArray.length)];
         }

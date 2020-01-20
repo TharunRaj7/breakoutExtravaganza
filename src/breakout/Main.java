@@ -63,9 +63,10 @@ public class Main extends Application {
     private Label startMessage;
     private Stage stage;
     Timeline animation;
+    Alien alien;
     boolean paddleRoidsActivated = false;
     boolean ballAcidActivated = false;
-    boolean laserActivated = false;
+    private boolean alienPresent;
 
     /**
      * Initialize what will be displayed and how it will be updated.
@@ -151,6 +152,11 @@ public class Main extends Application {
         // update "actors" attributes
         myBall.setX(myBall.getX() + bouncer_speed * elapsedTime*directionX);
         myBall.setY(myBall.getY() + bouncer_speed * elapsedTime*directionY);
+        if (alienPresent){
+            alien.setyValue(alien.getYValue() + alien.getSpeed() * elapsedTime);
+        }
+        
+        
         if (myBall.getX() + myBall.getBoundsInLocal().getWidth() >= myScene.getWidth()){
             directionX *= -1;
         }
@@ -163,6 +169,7 @@ public class Main extends Application {
         if (myBall.getY() > myScene.getHeight()){
             checkAndRemoveLives();
         }
+
         //Handle Paddle-Ball Interaction (add specificity to the paddle)
         // condition for collision: find shape interaction and check to see if above -1.
         //Shape shape = Shape.intersect(myBall, myPaddle);
@@ -178,6 +185,7 @@ public class Main extends Application {
         }
         brickBallCollision();
     }
+
 
     private void checkAndRemoveLives() {
         lives--;
@@ -328,20 +336,7 @@ public class Main extends Application {
                 paddleRoidsActivated = true;
                 myPaddle.setWidth(myPaddle.getWidth() + 100);
                 myPaddle.setX(myPaddle.getX() - 50);
-                /*Timer t1 = new java.util.Timer();
-                t1.schedule(
-                        new java.util.TimerTask() {
-                            @Override
-                            public void run() {
-                                System.out.println("roids deactivated");
-                                myPaddle.setWidth(myPaddle.getWidth() - 100);
-                                myPaddle.setX(myPaddle.getX() + 50);
-                                paddleRoidsActivated = false;
-                                t1.cancel();
-                            }
-                        },
-                        10000
-                );*/
+
                 Thread thread = new Thread(() -> {
                     try {
                         Platform.runLater(() -> {myPaddle.setWidth(MOVER_SIZE + 100);});
@@ -374,6 +369,14 @@ public class Main extends Application {
                         },
                         10000
                 );
+            }
+        }
+
+        else if (powerUpType.equals("Alien")) {
+            if (!alienPresent){
+                alienPresent = true;
+                this.alien = new Alien(myScene.getWidth()/2, 0, bouncer_speed);
+                root.getChildren().add(alien.getNode());
             }
         }
     }
