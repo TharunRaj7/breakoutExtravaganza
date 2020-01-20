@@ -1,5 +1,6 @@
 package breakout;
 
+import javafx.scene.effect.*;
 import javafx.scene.image.ImageView;
 
 import java.util.Random;
@@ -21,6 +22,13 @@ public class Brick {
         this.hasPowerUp = selectHasPowerUp();
         this.powerUpType = assignPowerUp();
         ImageView image = new ImageView(imageFile);
+        if(this.hasPowerUp){
+            ColorAdjust colorAdjust = new ColorAdjust();
+            colorAdjust.setBrightness(0.4);
+           // colorAdjust.setHue(-0.05);
+            //colorAdjust.setContrast(0.8);
+            image.setEffect(colorAdjust);
+        }
         image.setX(xValue);
         image.setY(yValue);
         image.setFitWidth(this.width);
@@ -31,7 +39,7 @@ public class Brick {
     //assign random powerup on initialization
     private String assignPowerUp() {
         if (hasPowerUp){
-            String [] powerUpArray = {"Lives", "PaddleRoids", "BallAcid"};
+            String [] powerUpArray = {"Lives", "PaddleRoids", "BallAcid", "InfinityLasers"};
             Random rand = new Random();
             return powerUpArray[rand.nextInt(powerUpArray.length)];
         }

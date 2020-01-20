@@ -3,6 +3,7 @@ package breakout;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -64,6 +65,7 @@ public class Main extends Application {
     Timeline animation;
     boolean paddleRoidsActivated = false;
     boolean ballAcidActivated = false;
+    boolean laserActivated = false;
 
     /**
      * Initialize what will be displayed and how it will be updated.
@@ -326,7 +328,7 @@ public class Main extends Application {
                 paddleRoidsActivated = true;
                 myPaddle.setWidth(myPaddle.getWidth() + 100);
                 myPaddle.setX(myPaddle.getX() - 50);
-                Timer t1 = new java.util.Timer();
+                /*Timer t1 = new java.util.Timer();
                 t1.schedule(
                         new java.util.TimerTask() {
                             @Override
@@ -339,7 +341,21 @@ public class Main extends Application {
                             }
                         },
                         10000
-                );
+                );*/
+                Thread thread = new Thread(() -> {
+                    try {
+                        Platform.runLater(() -> {myPaddle.setWidth(MOVER_SIZE + 100);});
+                        Thread.sleep(5000);
+                        Platform.runLater(() -> {myPaddle.setWidth(MOVER_SIZE);
+                            myPaddle.setX(myPaddle.getX() + 50);
+                            paddleRoidsActivated = false;});
+                    } catch (InterruptedException exc) {
+                        // should not be able to get here...
+                        throw new Error("Unexpected interruption");
+                    }
+                });
+                thread.start();
+
             }
         }
         else if (powerUpType.equals("BallAcid")){
@@ -379,7 +395,7 @@ public class Main extends Application {
         int brickWidth = (int) dummy.getNode().getFitWidth();
         int brickHeight = (int) dummy.getNode().getFitHeight();
 
-        String [] imageNames = {"none", "brick7.gif", "brick4.gif", "brick10.gif"};
+        String [] imageNames = {"none", "brick7.gif", "brick4.gif", "brick8.gif"};
         gameBricks = new ArrayList<>();
         while(sc.hasNextLine()){
             String row = sc.nextLine();
@@ -455,15 +471,27 @@ public class Main extends Application {
         }
         else if (code == KeyCode.R){
            resetBall();
-           myPaddle.setX(myScene.getWidth()/2);
+           myPaddle.setX(myScene.getWidth()/2 - 10);
            myPaddle.setWidth(MOVER_SIZE);
         }
-        else if (code == KeyCode.E){
-            animation.play();
-            gameBricks.clear();
+        else if (code == KeyCode.DIGIT1){
+            animation.stop();
+            currentLevel = 0;
+            callNewLevel();
+        }
+        else if (code == KeyCode.DIGIT2){
+            animation.stop();
+            currentLevel = 1;
+            callNewLevel();
+        }
+        else if (code == KeyCode.DIGIT3){
+            animation.stop();
+            currentLevel = 2;
+            callNewLevel();
         }
         else if(code == KeyCode.L){
-
+            lives++;
+            livesDisp.setText("Lives: " + lives);
         }
     }
 
