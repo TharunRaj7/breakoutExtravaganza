@@ -14,8 +14,9 @@ public class Alien {
         this.xValue = xValue;
         this.yValue = yValue;
         this.mySpeed = speed;
-        this.myNode = new ImageView("extraballpower.gif");
+        this.myNode = new ImageView("alien.gif");
         this.myNode.setY(yValue); this.myNode.setX(xValue);
+        this.myNode.setFitWidth(25); this.myNode.setFitHeight(25);
     }
 
     public void updateYValue(int yValue){

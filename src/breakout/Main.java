@@ -19,10 +19,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * Feel free to completely change this code or delete it entirely. 
@@ -31,7 +28,7 @@ public class Main extends Application {
     /**
      * Start of the program.
      */
-    public static final String TITLE = "Super Breakout (Platinum Edtion)";
+    public static final String TITLE = "Space Breakout (Platinum Edtion)";
     public static final int SIZE = 600;
     public static final int FRAMES_PER_SECOND = 200;
     public static final int MILLISECOND_DELAY = 1000 / FRAMES_PER_SECOND;
@@ -41,13 +38,13 @@ public class Main extends Application {
     public static final String BOUNCER_IMAGE = "ball.gif";
     public static final Paint MOVER_COLOR = Color.ROYALBLUE;
     public static final int MOVER_SIZE = 80;
-    public static final int MOVER_SPEED = 35;
     public static final Paint GROWER_COLOR = Color.BISQUE;
 
     // some things needed to remember during game
     private Scene myScene;
     private ImageView myBall;
     private int bouncer_speed;
+    private int mover_speed;
     private Rectangle myPaddle;
     private Scene mySplash;
     double directionX = 1;
@@ -61,6 +58,7 @@ public class Main extends Application {
     private Label scoreDisp;
     private Label livesDisp;
     private Label startMessage;
+    private Label powerUpDisp;
     private Stage stage;
     Timeline animation;
     Alien alien;
@@ -85,10 +83,23 @@ public class Main extends Application {
 
     //Creates the splash screen to display when the game is launched
     private Scene splashScreen(Stage stage){
-        Button button = new Button("pundek");
+        Label label = new Label("                                       WELCOME TO SPACE BREAKOUT!\n\n" +
+                "Here are the rules:\n" +
+                "- Use the left and right arrow keys to move the paddle and \n   prevent the ball from falling\n\n" +
+                "- You gain 1 point for every brick you hit and lose a life for \n   every ball you miss\n\n" +
+                "- The faded out bricks contain power ups (Paddle Roids, Ball Acid \n   and Extra Lives)\n\n" +
+                "- Occasionally an alien enters your solar system and the only \n   way to stop them is by catching them with your paddle\n\n" +
+                "- Catching an alien gives you additional score points and if you \n   fail to catch them, you lose a life\n\n" +
+                "                                                   ARE YOU READY?!");
+
+        label.setFont(new Font("Algerian", 17));
+        label.setTextFill(Color.GREENYELLOW);
+        label.setTranslateY(50);
+        Button button = new Button("PLAY");
+        button.setTranslateX(275); button.setTranslateY(520);
         button.setOnAction(e -> {stage.setScene(myScene);gameLoop();});
         Group group = new Group();
-        group.getChildren().add(button);
+        group.getChildren().addAll(button, label);
         Scene retSplash = new Scene(group, SIZE, SIZE, BACKGROUND);
         return retSplash;
     }
@@ -103,29 +114,37 @@ public class Main extends Application {
         myBall.setX(width / 2 - myBall.getBoundsInLocal().getWidth() / 2);
         myBall.setY(height / 2 - myBall.getBoundsInLocal().getHeight() / 2);
         myPaddle = new Rectangle(width / 2 - MOVER_SIZE / 2, height-MOVER_SIZE/2, MOVER_SIZE + 10, MOVER_SIZE/4);
+
         myPaddle.setFill(MOVER_COLOR);
         // order added to the group is the order in which they are drawn
         root.getChildren().add(myBall);
         root.getChildren().add(myPaddle);
 
-        bouncer_speed = 250;
+        bouncer_speed = 200 + currentLevel*25;
+        mover_speed = 30 + currentLevel*5;
 
         scoreDisp = new Label("Score: " + score);
         livesDisp = new Label("Lives: " + lives);
         levelDisp = new Label("Level " + currentLevel);
+        powerUpDisp = new Label();
         startMessage = new Label("Press G to start");
 
         scoreDisp.setTextFill(Color.GREENYELLOW);
         livesDisp.setTextFill(Color.GREENYELLOW);
         levelDisp.setTextFill(Color.AQUA);
         startMessage.setTextFill(Color.BLUEVIOLET);
+        powerUpDisp.setTextFill(Color.AQUA);
 
+        powerUpDisp.setTranslateX(400);
+        powerUpDisp.setVisible(false);
         scoreDisp.setTranslateX(100);
         livesDisp.setTranslateX(200);
         startMessage.setTranslateX(233); startMessage.setTranslateY(350);
-        startMessage.setFont(new Font("Algerian", 15));
+        startMessage.setFont(new Font("Algerian", 17));
 
-        root.getChildren().addAll(scoreDisp, livesDisp, levelDisp, startMessage);
+        powerUpDisp.setFont(new Font(12));
+
+        root.getChildren().addAll(scoreDisp, livesDisp, levelDisp, startMessage, powerUpDisp);
         // create a place to see the shapes
         Scene scene = new Scene(root, width, height, background);
         // respond to input
@@ -152,9 +171,11 @@ public class Main extends Application {
         // update "actors" attributes
         myBall.setX(myBall.getX() + bouncer_speed * elapsedTime*directionX);
         myBall.setY(myBall.getY() + bouncer_speed * elapsedTime*directionY);
-        if (alienPresent){
-            alien.setyValue(alien.getYValue() + alien.getSpeed() * elapsedTime);
+        if(alienPresent){
+            AlienPaddleCollision(elapsedTime);
         }
+
+
         
         
         if (myBall.getX() + myBall.getBoundsInLocal().getWidth() >= myScene.getWidth()){
@@ -184,6 +205,30 @@ public class Main extends Application {
             //directionX *= -1;
         }
         brickBallCollision();
+    }
+
+    private void AlienPaddleCollision(double elapsedTime) {
+        alien.setyValue(alien.getYValue() + alien.getSpeed() * elapsedTime);
+        if (myPaddle.intersects(alien.getNode().getBoundsInLocal())){
+            updateScore(20);
+            alienPresent = false;
+            root.getChildren().remove(alien.getNode());
+        }
+        else if (alien.getYValue() > myScene.getHeight()){
+            lives--;
+            livesDisp.setText("Lives: " + lives);
+            alienPresent = false;
+            root.getChildren().remove(alien.getNode());
+        }
+    }
+
+    private void initiateAlien() {
+        if (!alienPresent) {
+            alienPresent = true;
+            double xValue = new Random().nextInt((int)(myScene.getWidth()) - 10) + 5;
+            this.alien = new Alien(xValue, 0, bouncer_speed / 2);
+            root.getChildren().add(alien.getNode());
+        }
     }
 
 
@@ -312,11 +357,17 @@ public class Main extends Application {
     //Removes respective bricks from the screen if it has not hits left and the gameBricks arrayList
     private void brickCheckAndRemove(Brick brick) {
         brick.brickHit();
-        updateScore();
+        updateScore(1);
         if(brick.getHits() < 1){
             root.getChildren().remove(brick.getNode());
             gameBricks.remove(brick);
             System.out.println(brick.getPowerUpType());
+            Random rand = new Random();
+            boolean [] choiceArray = {true,false,false,false,false};
+            boolean choice = choiceArray[rand.nextInt(choiceArray.length)];
+            if(choice){
+                initiateAlien();
+            }
             if(brick.isHasPowerUp()){
                 powerUpHandler(brick.getPowerUpType());
             }
@@ -327,8 +378,19 @@ public class Main extends Application {
     private void powerUpHandler(String powerUpType) {
         if(powerUpType.equals("Lives")){
             if(lives < 5){
-                lives++;
-                livesDisp.setText("lives: " + lives);
+                Thread thread = new Thread(() -> {
+                    try {
+                        Platform.runLater(() -> {lives++;
+                            livesDisp.setText("lives: " + lives);
+                            powerUpDisp.setText("Extra Life Obtained!"); powerUpDisp.setVisible(true);});
+                        Thread.sleep(1500);
+                        Platform.runLater(() -> {powerUpDisp.setVisible(false);});
+                    } catch (InterruptedException exc) {
+                        // should not be able to get here...
+                        throw new Error("Unexpected interruption");
+                    }
+                });
+                thread.start();
             }
         }
         else if (powerUpType.equals("PaddleRoids")){
@@ -336,53 +398,48 @@ public class Main extends Application {
                 paddleRoidsActivated = true;
                 myPaddle.setWidth(myPaddle.getWidth() + 100);
                 myPaddle.setX(myPaddle.getX() - 50);
+                powerUpDisp.setText("Paddle Roids Activated!"); powerUpDisp.setVisible(true);
 
-                Thread thread = new Thread(() -> {
+                Thread thread1 = new Thread(() -> {
                     try {
                         Platform.runLater(() -> {myPaddle.setWidth(MOVER_SIZE + 100);});
                         Thread.sleep(5000);
                         Platform.runLater(() -> {myPaddle.setWidth(MOVER_SIZE);
                             myPaddle.setX(myPaddle.getX() + 50);
-                            paddleRoidsActivated = false;});
+                            paddleRoidsActivated = false; powerUpDisp.setVisible(false);});
                     } catch (InterruptedException exc) {
                         // should not be able to get here...
                         throw new Error("Unexpected interruption");
                     }
                 });
-                thread.start();
+                thread1.start();
 
             }
         }
         else if (powerUpType.equals("BallAcid")){
             if (!ballAcidActivated){
-                bouncer_speed -= 70;
-                ballAcidActivated = true;
-                Timer t2 = new java.util.Timer();
-                t2.schedule(
-                        new java.util.TimerTask() {
-                            @Override
-                            public void run() {
-                                bouncer_speed += 70;
-                                ballAcidActivated = false;
-                                t2.cancel();
-                            }
-                        },
-                        10000
-                );
-            }
-        }
+                Thread thread2 = new Thread(() -> {
+                    try {
+                        Platform.runLater(() -> {bouncer_speed -= 85;
+                            ballAcidActivated = true;
+                            powerUpDisp.setText("Ball Acid Activated!"); powerUpDisp.setVisible(true);});
+                        Thread.sleep(5000);
+                        Platform.runLater(() -> {bouncer_speed += 85;
+                            ballAcidActivated = false;
+                            powerUpDisp.setVisible(false);});
+                    } catch (InterruptedException exc) {
+                        // should not be able to get here...
+                        throw new Error("Unexpected interruption");
+                    }
+                });
+                thread2.start();
 
-        else if (powerUpType.equals("Alien")) {
-            if (!alienPresent){
-                alienPresent = true;
-                this.alien = new Alien(myScene.getWidth()/2, 0, bouncer_speed);
-                root.getChildren().add(alien.getNode());
             }
         }
     }
 
-    private void updateScore() {
-        score++;
+    private void updateScore(int val) {
+        score += val;
         scoreDisp.setText("Score: " + score);
     }
 
@@ -429,13 +486,13 @@ public class Main extends Application {
             if (myPaddle.getX() + myPaddle.getWidth() >= myScene.getWidth()-5){
                 return;
             }
-            myPaddle.setX(myPaddle.getX() + MOVER_SPEED);
+            myPaddle.setX(myPaddle.getX() + mover_speed);
         }
         else if (code == KeyCode.LEFT) {
             if (myPaddle.getX() <= 5){
                 return;
             }
-            myPaddle.setX(myPaddle.getX() - MOVER_SPEED);
+            myPaddle.setX(myPaddle.getX() - mover_speed);
         }
         else if (code == KeyCode.G){
             animation.play();
