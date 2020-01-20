@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * Feel free to completely change this code or delete it entirely. 
  */
-public class Main extends Application {
+public class GameDriver extends Application {
     /**
      * Start of the program.
      */
@@ -166,18 +166,18 @@ public class Main extends Application {
     }
 
     // Change properties of shapes in small ways to animate them over time
-    // Note, there are more sophisticated ways to animate shapes, but these simple ways work fine to start
     private void step (double elapsedTime) {
-        // update "actors" attributes
+        // Move the ball
         myBall.setX(myBall.getX() + bouncer_speed * elapsedTime*directionX);
         myBall.setY(myBall.getY() + bouncer_speed * elapsedTime*directionY);
-        if(alienPresent){
-            AlienPaddleCollision(elapsedTime);
-        }
 
+        AlienPaddleCollision(elapsedTime);
+        wallBallCollision();
+        paddleBallCollision();
+        brickBallCollision();
+    }
 
-        
-        
+    private void wallBallCollision() {
         if (myBall.getX() + myBall.getBoundsInLocal().getWidth() >= myScene.getWidth()){
             directionX *= -1;
         }
@@ -190,10 +190,11 @@ public class Main extends Application {
         if (myBall.getY() > myScene.getHeight()){
             checkAndRemoveLives();
         }
+    }
 
+    private void paddleBallCollision() {
         //Handle Paddle-Ball Interaction (add specificity to the paddle)
         // condition for collision: find shape interaction and check to see if above -1.
-        //Shape shape = Shape.intersect(myBall, myPaddle);
         if (myBall.getY() + myBall.getBoundsInLocal().getHeight() >= myPaddle.getY() && myBall.getY() + myBall.getBoundsInLocal().getHeight() <= myPaddle.getY()+3
                 && myBall.getX() >= myPaddle.getX() && myBall.getX() <= (myPaddle.getX() + myPaddle.getWidth())){
             directionY *= -1;
@@ -204,22 +205,29 @@ public class Main extends Application {
             myPaddle.setFill(Color.ROYALBLUE);
             //directionX *= -1;
         }
-        brickBallCollision();
     }
 
     private void AlienPaddleCollision(double elapsedTime) {
-        alien.setyValue(alien.getYValue() + alien.getSpeed() * elapsedTime);
-        if (myPaddle.intersects(alien.getNode().getBoundsInLocal())){
-            updateScore(20);
-            alienPresent = false;
+        if(alienPresent){
+            alien.setyValue(alien.getYValue() + alien.getSpeed() * elapsedTime);
+            if (myPaddle.intersects(alien.getNode().getBoundsInLocal())){
+                updateScore(20);
+                removeAlien();
+            }
+            else if (alien.getYValue() > myScene.getHeight()){
+                lives--;
+                livesDisp.setText("Lives: " + lives);
+                removeAlien();
+            }
+        }
+
+    }
+
+    private void removeAlien(){
+        if (alienPresent){
             root.getChildren().remove(alien.getNode());
         }
-        else if (alien.getYValue() > myScene.getHeight()){
-            lives--;
-            livesDisp.setText("Lives: " + lives);
-            alienPresent = false;
-            root.getChildren().remove(alien.getNode());
-        }
+        alienPresent = false;
     }
 
     private void initiateAlien() {
@@ -237,6 +245,7 @@ public class Main extends Application {
         if(lives > -1){
             livesDisp.setText("lives: " + lives);
             resetBall();
+            removeAlien();
             return;
         }
         else if (lives < 0){
@@ -323,7 +332,12 @@ public class Main extends Application {
         checkGameCondition(bricksLeft);
     }
 
-    // if no bricks are left, the next level is called.
+
+
+    /**
+     * if no bricks are left, the next level is called.
+     * @param bricksLeft
+     */
     private void checkGameCondition(int bricksLeft) {
         //System.out.println("debug checkGame");
         if (bricksLeft == 0){
