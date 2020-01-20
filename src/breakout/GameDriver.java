@@ -22,25 +22,25 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
- * Feel free to completely change this code or delete it entirely. 
+ * Space Breakout (Platinum Edition), a remake of the classic breakout game.
+ * @author Tharun Raj Mani Raj
  */
+
 public class GameDriver extends Application {
     /**
      * Start of the program.
      */
-    public static final String TITLE = "Space Breakout (Platinum Edtion)";
+    public static final String TITLE = "Space Breakout (Platinum Edition)";
     public static final int SIZE = 600;
     public static final int FRAMES_PER_SECOND = 200;
     public static final int MILLISECOND_DELAY = 1000 / FRAMES_PER_SECOND;
     public static final double SECOND_DELAY = 1.0 / FRAMES_PER_SECOND;
     public static final Paint BACKGROUND = Color.BLACK;
-    public static final Paint HIGHLIGHT = Color.OLIVEDRAB;
     public static final String BOUNCER_IMAGE = "ball.gif";
     public static final Paint MOVER_COLOR = Color.ROYALBLUE;
     public static final int MOVER_SIZE = 80;
-    public static final Paint GROWER_COLOR = Color.BISQUE;
 
-    // some things needed to remember during game
+    // Declaring the instance variables
     private Scene myScene;
     private ImageView myBall;
     private int bouncer_speed;
@@ -67,7 +67,9 @@ public class GameDriver extends Application {
     private boolean alienPresent;
 
     /**
-     * Initialize what will be displayed and how it will be updated.
+     * Initializes what will be displayed and sets up the stage.
+     * @param stage
+     * @throws FileNotFoundException
      */
     @Override
     public void start (Stage stage) throws FileNotFoundException {
@@ -81,7 +83,11 @@ public class GameDriver extends Application {
         this.stage = stage;
     }
 
-    //Creates the splash screen to display when the game is launched
+    /**
+     * Creates the splash screen to display when the game is launched
+     * @param stage
+     * @return
+     */
     private Scene splashScreen(Stage stage){
         Label label = new Label("                                       WELCOME TO SPACE BREAKOUT!\n\n" +
                 "Here are the rules:\n" +
@@ -103,8 +109,28 @@ public class GameDriver extends Application {
         Scene retSplash = new Scene(group, SIZE, SIZE, BACKGROUND);
         return retSplash;
     }
+
+
     // Create the game's "scene": what shapes will be in the game and their starting properties
     private Scene setupGame (int width, int height, Paint background) throws FileNotFoundException {
+
+        RootBallPaddleInitializer(width, height);
+        initializeLabels();
+        root.getChildren().addAll(scoreDisp, livesDisp, levelDisp, startMessage, powerUpDisp);
+        // create the scene
+        Scene scene = new Scene(root, width, height, background);
+        // respond to input
+        scene.setOnKeyPressed(e -> handleKeyInput(e.getCode()));
+
+        //Create bricks and add to scene
+        makeBricks(scene);
+        return scene;
+    }
+
+    /**
+     * Sets up the group variable used throughout the game
+     */
+    private void RootBallPaddleInitializer(int width, int height) {
         // create one top level collection to organize the things in the scene
         root = new Group();
         // make some shapes and set their properties
@@ -116,13 +142,18 @@ public class GameDriver extends Application {
         myPaddle = new Rectangle(width / 2 - MOVER_SIZE / 2, height-MOVER_SIZE/2, MOVER_SIZE + 10, MOVER_SIZE/4);
 
         myPaddle.setFill(MOVER_COLOR);
-        // order added to the group is the order in which they are drawn
         root.getChildren().add(myBall);
         root.getChildren().add(myPaddle);
 
+        // set the speeds according to the currentLevel
         bouncer_speed = 200 + currentLevel*25;
         mover_speed = 30 + currentLevel*5;
+    }
 
+    /**
+     * Initialize the labels required throughout the game
+     */
+    private void initializeLabels (){
         scoreDisp = new Label("Score: " + score);
         livesDisp = new Label("Lives: " + lives);
         levelDisp = new Label("Level " + currentLevel);
@@ -141,21 +172,12 @@ public class GameDriver extends Application {
         livesDisp.setTranslateX(200);
         startMessage.setTranslateX(233); startMessage.setTranslateY(350);
         startMessage.setFont(new Font("Algerian", 17));
-
         powerUpDisp.setFont(new Font(12));
-
-        root.getChildren().addAll(scoreDisp, livesDisp, levelDisp, startMessage, powerUpDisp);
-        // create a place to see the shapes
-        Scene scene = new Scene(root, width, height, background);
-        // respond to input
-        scene.setOnKeyPressed(e -> handleKeyInput(e.getCode()));
-        scene.setOnMouseClicked(e -> handleMouseInput(e.getX(), e.getY()));
-
-        //Create bricks and add to scene
-        makeBricks(scene);
-        return scene;
     }
 
+    /**
+     * Initialize the essential time control mechanism
+     */
     private void gameLoop (){
         // attach "game loop" to timeline to play it (basically just calling step() method repeatedly forever)
         KeyFrame frame = new KeyFrame(Duration.millis(MILLISECOND_DELAY), e -> step(SECOND_DELAY));
@@ -165,7 +187,10 @@ public class GameDriver extends Application {
         //animation.play();
     }
 
-    // Change properties of shapes in small ways to animate them over time
+    /**
+     * Moves the ball and calls a series of functions to check for collisions between game elements
+     * @param elapsedTime
+     */
     private void step (double elapsedTime) {
         // Move the ball
         myBall.setX(myBall.getX() + bouncer_speed * elapsedTime*directionX);
@@ -177,6 +202,9 @@ public class GameDriver extends Application {
         brickBallCollision();
     }
 
+    /**
+     * Logic to check for collisions between the ball and the walls.
+     */
     private void wallBallCollision() {
         if (myBall.getX() + myBall.getBoundsInLocal().getWidth() >= myScene.getWidth()){
             directionX *= -1;
@@ -192,6 +220,9 @@ public class GameDriver extends Application {
         }
     }
 
+    /**
+     * Logic to check for collisions between the ball and the paddle.
+     */
     private void paddleBallCollision() {
         //Handle Paddle-Ball Interaction (add specificity to the paddle)
         // condition for collision: find shape interaction and check to see if above -1.
@@ -207,6 +238,9 @@ public class GameDriver extends Application {
         }
     }
 
+    /**
+     * Logic to check for collisions between the paddle and aliens.
+     */
     private void AlienPaddleCollision(double elapsedTime) {
         if(alienPresent){
             alien.setyValue(alien.getYValue() + alien.getSpeed() * elapsedTime);
@@ -223,6 +257,9 @@ public class GameDriver extends Application {
 
     }
 
+    /**
+     * Remove an alien from the screen if it's present
+     */
     private void removeAlien(){
         if (alienPresent){
             root.getChildren().remove(alien.getNode());
@@ -230,6 +267,9 @@ public class GameDriver extends Application {
         alienPresent = false;
     }
 
+    /**
+     * Creates an alien if an alien is not already present
+     */
     private void initiateAlien() {
         if (!alienPresent) {
             alienPresent = true;
@@ -240,6 +280,9 @@ public class GameDriver extends Application {
     }
 
 
+    /**
+     * Checks for specified conditions and removes lives accordingly
+     */
     private void checkAndRemoveLives() {
         lives--;
         if(lives > -1){
@@ -253,6 +296,10 @@ public class GameDriver extends Application {
         }
     }
 
+    /**
+     * Sets up the win or lose screen and displays them accordingly
+     * @param end
+     */
     private void gameEnd(String end) {
         animation.stop();
         Group group = new Group();
@@ -272,6 +319,9 @@ public class GameDriver extends Application {
         stage.setScene(scene);
     }
 
+    /**
+     * Resets the position of the ball and the paddle to its original positions
+     */
     private void resetBall() {
         animation.pause();
         startMessage.setVisible(true);
@@ -281,9 +331,10 @@ public class GameDriver extends Application {
         directionY = 1;
     }
 
-    /*This function checks for collisions between the ball and all the bricks
+    /**
+     * Checks for collisions between the ball and all the bricks
     * This function runs the appropriate logic to update the brick values and deflect the ball if a collision occurs
-    * */
+    */
     private void brickBallCollision() {
         //System.out.println(gameBricks.size());    //this works
         int bricksLeft = gameBricks.size();
@@ -333,7 +384,6 @@ public class GameDriver extends Application {
     }
 
 
-
     /**
      * if no bricks are left, the next level is called.
      * @param bricksLeft
@@ -350,6 +400,9 @@ public class GameDriver extends Application {
         }
     }
 
+    /**
+     * Calls a new Level
+     */
     private void callNewLevel() {
         //System.out.println("debug");
         if(currentLevel < 3){
@@ -370,6 +423,12 @@ public class GameDriver extends Application {
 
     //Removes respective bricks from the screen if it has not hits left and the gameBricks arrayList.
     //The function also calls appropriate functions when a brick is destroyed to initiate both the powerUpHandler function and the initiateAlien function
+
+    /**
+     * Removes respective bricks from the screen if it has not hits left and the gameBricks arrayList.
+     * The function also calls appropriate functions when a brick is destroyed to initiate both the powerUpHandler function and the initiateAlien function
+     * @param brick
+     */
     private void brickCheckAndRemove(Brick brick) {
         brick.brickHit();
         updateScore(1);
@@ -390,6 +449,10 @@ public class GameDriver extends Application {
         }
     }
 
+    /**
+     * Handles power ups
+     * @param powerUpType
+     */
     private void powerUpHandler(String powerUpType) {
         if(powerUpType.equals("Lives")){
             if(lives < 5){
@@ -453,23 +516,31 @@ public class GameDriver extends Application {
         }
     }
 
+
+
+    /**
+     * updates the game score appropriately
+     * @param val
+     */
     private void updateScore(int val) {
         score += val;
         scoreDisp.setText("Score: " + score);
     }
 
+    /**
+     * Makes the bricks required on each level
+     * @param scene
+     * @throws FileNotFoundException
+     */
     private void makeBricks(Scene scene) throws FileNotFoundException {
         //read text file
         File file = new File("resources/level_" + currentLevel + ".txt");
         Scanner sc = new Scanner(file);
-
-
         int initXValue = (int) (scene.getWidth()/8 + 15);
         int yValue = (int) (scene.getHeight()/8);
         Brick dummy = new Brick (1, 0, 0, "brick1.gif"); //dummy brick object to extract width and height values
         int brickWidth = (int) dummy.getNode().getFitWidth();
         int brickHeight = (int) dummy.getNode().getFitHeight();
-
         String [] imageNames = {"none", "brick7.gif", "brick4.gif", "brick8.gif"};
         gameBricks = new ArrayList<>();
         while(sc.hasNextLine()){
@@ -487,15 +558,14 @@ public class GameDriver extends Application {
             }
             yValue += brickHeight;
        }
-
     }
 
 
 
-
-
-
-    // What to do each time a key is pressed
+    /**
+     * Handles keyboard inputs
+     * @param code
+     */
     private void handleKeyInput (KeyCode code) {
         if (code == KeyCode.RIGHT) {
             if (myPaddle.getX() + myPaddle.getWidth() >= myScene.getWidth()-5){
@@ -516,17 +586,12 @@ public class GameDriver extends Application {
         else{
             callCheatCode(code);
         }
-        // NEW Java 12 syntax that some prefer (but watch out for the many special cases!)
-        //   https://blog.jetbrains.com/idea/2019/02/java-12-and-intellij-idea/
-        // Note, must set Project Language Level to "13 Preview" under File -> Project Structure
-        // switch (code) {
-        //     case RIGHT -> myPaddle.setX(myPaddle.getX() + MOVER_SPEED);
-        //     case LEFT -> myPaddle.setX(myPaddle.getX() - MOVER_SPEED);
-        //     case UP -> myPaddle.setY(myPaddle.getY() - MOVER_SPEED);
-        //     case DOWN -> myPaddle.setY(myPaddle.getY() + MOVER_SPEED);
-        // }
     }
 
+    /**
+     * Function to handle cheatCodes
+     * @param code
+     */
     private void callCheatCode(KeyCode code) {
         if (code == KeyCode.S){
             bouncer_speed /= 2;
@@ -570,10 +635,10 @@ public class GameDriver extends Application {
         }
     }
 
-    // What to do each time a key is pressed
-    private void handleMouseInput (double x, double y) {
-        }
-
+    /**
+     * main function to initiate the game
+     * @param args
+     */
     public static void main (String[] args){launch(args);}
 
     }

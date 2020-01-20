@@ -60,6 +60,7 @@ destroying the aliens through this implementation.
 - I used java 13 for this project, and some of the functionalities may not be available in previous versions of java.
 - One interesting issue I had was using a timer for the power ups. Sometimes it led to some buggy gameplay where a portion of the screen would be blacked out.
 To overcome this, I changed my timer implementation from TimerTask to the Platform.runLater implementation and the bug seemed to be fixed.
+- The ball speed and paddle speed increases respective to the level currently being played.
 
 ### Impressions
 - This project was definitely an experience. I spent a decent amount of time working on this project, but every step of the way was more interesting than the last. I learned so much
