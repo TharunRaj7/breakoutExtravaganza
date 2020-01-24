@@ -42,3 +42,4 @@
 The added feature is an additional game mode called "Crossover mode." In this mode, on each level, after an interval of brick hits, "aliens" will start to appear from the top of the screen which the player needs to kill before they reach the bottom, in which case the player loses a life for each alien that does. The player kills the aliens using the same ball. An optional feature would be to add lasers that continuously shoot to kill the aliens while the player simultaneously tries to break all the bricks.
 
 This is a harder gameplay option but definitely more fun. The name of this mode is inspired by the fact that this gameplay option is essentially a ***crossover*** between Breakout and Space Invaders.
+
