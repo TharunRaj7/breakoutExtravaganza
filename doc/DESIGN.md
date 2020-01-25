@@ -1,10 +1,3 @@
-names of all people who worked on the project
-each person's role in developing the project
-what are the project's design goals, specifically what kinds of new features did you want to make easy to add
-describe the high-level design of your project, focusing on the purpose and interaction of the core classes
-what assumptions or decisions were made to simplify your project's design, especially those that affected adding required features
-describe, in detail, how to add new features to your project, especially ones you were not able to complete by the deadline
-
 DESIGN.md
 - Individual project by Tharun Raj Mani Raj (tm272)
 - I wanted to make it easy to add new powerups to the game. Since I used essentially only one class for this, I made almost all the important attributes of the game instance variables so that all the different powerup functions could access them easily.

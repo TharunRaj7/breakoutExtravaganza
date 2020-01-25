@@ -65,6 +65,7 @@ public class GameDriver extends Application {
     boolean paddleRoidsActivated = false;
     boolean ballAcidActivated = false;
     private boolean alienPresent;
+    //private PowerUps power = new PowerUps();
 
     /**
      * Initializes what will be displayed and sets up the stage.
@@ -443,7 +444,8 @@ public class GameDriver extends Application {
                 initiateAlien();
             }
             if(brick.isHasPowerUp()){
-                powerUpHandler(brick.getPowerUpType());
+                PowerUps power = new PowerUps();
+                power.powerUpHandler(brick.getPowerUpType(), this);
             }
 
         }
@@ -453,7 +455,7 @@ public class GameDriver extends Application {
      * Handles power ups
      * @param powerUpType
      */
-    private void powerUpHandler(String powerUpType) {
+    /*private void powerUpHandler(String powerUpType) {
         if(powerUpType.equals("Lives")){
             if(lives < 5){
                 Thread thread = new Thread(() -> {
@@ -514,7 +516,7 @@ public class GameDriver extends Application {
 
             }
         }
-    }
+    }*/
 
 
 
@@ -634,6 +636,53 @@ public class GameDriver extends Application {
             livesDisp.setText("Lives: " + lives);
         }
     }
+
+
+    public int getBouncer_speed() {
+        return bouncer_speed;
+    }
+
+    public void setBouncer_speed(int bouncer_speed) {
+        this.bouncer_speed = bouncer_speed;
+    }
+
+    public int getLives() {
+        return lives;
+    }
+
+    public void setLives(int lives) {
+        this.lives = lives;
+    }
+
+    public Label getLivesDisp() {
+        return livesDisp;
+    }
+
+      public boolean isPaddleRoidsActivated() {
+        return paddleRoidsActivated;
+    }
+
+    public void setPaddleRoidsActivated(boolean paddleRoidsActivated) {
+        this.paddleRoidsActivated = paddleRoidsActivated;
+    }
+
+    public boolean isBallAcidActivated() {
+        return ballAcidActivated;
+    }
+
+    public void setBallAcidActivated(boolean ballAcidActivated) {
+        this.ballAcidActivated = ballAcidActivated;
+    }
+
+    public Rectangle getMyPaddle() {
+        return myPaddle;
+    }
+
+    public Label getPowerUpDisp() {
+        return powerUpDisp;
+    }
+
+
 
     /**
      * main function to initiate the game

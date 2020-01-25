@@ -1,3 +1,7 @@
+/**
+ * This class provides the blueprint to make brick objects. I think it is well designed because it does the powerUp assignment automatically
+ * during the brick instantiation instead of in the main class.
+ */
 package breakout;
 
 import javafx.scene.effect.*;
@@ -41,7 +45,7 @@ public class Brick {
     //assign random powerup on initialization
     private String assignPowerUp() {
         if (hasPowerUp){
-            String [] powerUpArray = {"Lives", "PaddleRoids", "BallAcid", };
+            String [] powerUpArray = {"Lives", "PaddleRoids", "BallAcid"};
             Random rand = new Random();
             return powerUpArray[rand.nextInt(powerUpArray.length)];
         }
